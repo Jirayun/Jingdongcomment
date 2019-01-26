@@ -1,0 +1,45 @@
+import requests
+import csv
+import re
+import threading
+#获取网页信息
+def get_requests(i):
+    url = "https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_comment98vv2492&productId=100001860781&score=0&sortType=5" \
+          "&page=%d&pageSize=10&isShadowSku=0&rid=0&fold=1" % i
+    #模拟浏览器请求数据
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3610.2 Safari/537.36'
+    }
+    html = requests.get(url, headers=headers).text
+    return html
+
+#爬取数据
+def get_data(i):
+    #利用函数获取网页信息
+    htmltext=get_requests(i)
+    #获取评论人、评论内容信息
+    #信息正则匹配
+    books = re.compile(r'"guid".*?,"nickname":"(.*?)","userClient":.*?,"content":"(.*?)",', re.S)
+    #信息获取
+    item_list = books.findall(htmltext)
+    return item_list
+
+#数据保存
+def save_data(i):
+    filename = 'comment.csv'
+    content=get_data(i)
+    with open(filename, 'a+', newline="") as fp:
+        filenames = ["会员", "评论"]
+        writer = csv.DictWriter(fp, filenames)
+        for c in content:
+            print(c[0])
+
+            row = {filenames[0]: str(c[0]),
+                   filenames[1]: c[1]}
+            writer.writerow(row)
+
+if __name__=='__main__':
+
+    for i in range(100):
+        t=threading.Thread(target=save_data,args=(1,))
+        t.start()
